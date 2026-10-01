@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUVI RACING</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    user-select:none;
+}
+
+body{
+    background:#070b12;
+    color:white;
+    font-family:Arial,sans-serif;
+    overflow:hidden;
+}
+
+#game{
+    position:relative;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+    background:#111;
+}
+
+/* SKY */
+.sky{
+    position:absolute;
+    top:0;
+    width:100%;
+    height:100%;
+    background:
+    linear-gradient(#78d7ff 0%,#c9f3ff 35%,#79b85b 36%,#397532 100%);
+}
+
+/* ROAD */
+.road{
+    position:absolute;
+    width:min(430px,82vw);
+    height:100%;
+    left:50%;
+    transform:translateX(-50%);
+    background:#333;
+    overflow:hidden;
+    border-left:8px solid #eee;
+    border-right:8px solid #eee;
+}
+
+.road::before,
+.road::after{
+    content:"";
+    position:absolute;
+    top:-100%;
+    height:200%;
+    width:8px;
+    background:repeating-linear-gradient(
+        to bottom,
+        white 0 70px,
+        transparent 70px 130px
+    );
+    animation:roadLines .45s linear infinite;
+}
+
+.road::before{
+    left:33.33%;
+}
+
+.road::after{
+    left:66.66%;
+}
+
+@keyframes roadLines{
+    from{transform:translateY(0)}
+    to{transform:translateY(130px)}
+}
+
+/* HUD */
+.hud{
+    position:absolute;
+    z-index:20;
+    top:15px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(500px,94vw);
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.box{
+    background:rgba(0,0,0,.7);
+    border:1px solid rgba(255,255,255,.25);
+    padding:9px 12px;
+    border-radius:12px;
+    text-align:center;
+    min-width:80px;
+    backdrop-filter:blur(5px);
+}
+
+.box small{
+    display:block;
+    color:#aaa;
+    font-size:10px;
+}
+
+.box strong{
+    font-size:18px;
+    color:#00f5ff;
+}
+
+/* PLAYER */
+.car{
+    position:absolute;
+    z-index:10;
+    width:54px;
+    height:92px;
+    border-radius:12px 12px 8px 8px;
+}
+
+.player{
+    background:linear-gradient(
+        90deg,
+        #8b0000,
+        #ff2020,
+        #8b0000
+    );
+    box-shadow:
+    0 0 18px rgba(255,0,0,.6);
+}
+
+.car::before{
+    content:"";
+    position:absolute;
+    width:38px;
+    height:30px;
+    left:8px;
+    top:10px;
+    border-radius:8px;
+    background:
+    linear-gradient(
+        135deg,
+        #bff7ff,
+        #277b9b
+    );
+}
+
+.car::after{
+    content:"";
+    position:absolute;
+    width:42px;
+    height:6px;
+    left:6px;
+    bottom:13px;
+    background:#111;
+    box-shadow:
+    0 -55px #111;
+    border-radius:4px;
+}
+
+/* ENEMY */
+.enemy{
+    background:
+    linear-gradient(
+        90deg,
+        #171717,
+        #777,
+        #171717
+    );
+}
+
+.enemy.blue{
+    background:
+    linear-gradient(
+        90deg,
+        #003d8f,
+        #008cff,
+        #003d8f
+    );
+}
+
+.enemy.yellow{
+    background:
+    linear-gradient(
+        90deg,
+        #a56a00,
+        #ffd21c,
+        #a56a00
+    );
+}
+
+/* COIN */
+.coin{
+    position:absolute;
+    z-index:8;
+    width:25px;
+    height:25px;
+    border-radius:50%;
+    background:
+    radial-gradient(circle,#fff47a 0 20%,#ffd000 22% 65%,#b87800 70%);
+    box-shadow:0 0 15px #ffd000;
+    animation:spin .5s linear infinite;
+}
+
+@keyframes spin{
+    to{transform:rotateY(360deg)}
+}
+
+/* START SCREEN */
+.screen{
+    position:absolute;
+    z-index:100;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:rgba(0,0,0,.78);
+    backdrop-filter:blur(8px);
+}
+
+.panel{
+    width:min(450px,90vw);
+    padding:35px 25px;
+    border-radius:25px;
+    background:
+    linear-gradient(145deg,#101827,#17243a);
+    border:1px solid #3c526e;
+    box-shadow:0 20px 70px #000;
+}
+
+.panel h1{
+    font-size:45px;
+    background:
+    linear-gradient(90deg,#00eaff,#ff00a8);
+    -webkit-background-clip:text;
+    color:transparent;
+    margin-bottom:10px;
+}
+
+.panel p{
+    color:#bbb;
+    margin:10px 0 25px;
+}
+
+button{
+    border:0;
+    cursor:pointer;
+    color:white;
+    font-weight:bold;
+}
+
+.mainBtn{
+    width:100%;
+    padding:15px;
+    border-radius:12px;
+    font-size:18px;
+    background:
+    linear-gradient(90deg,#ff1744,#ff00a8);
+    box-shadow:0 8px 25px rgba(255,0,120,.3);
+}
+
+/* CONTROLS */
+.controls{
+    position:absolute;
+    z-index:30;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    width:min(430px,90vw);
+    display:flex;
+    justify-content:space-between;
+    pointer-events:none;
+}
+
+.control{
+    pointer-events:auto;
+    width:75px;
+    height:60px;
+    border-radius:18px;
+    background:rgba(0,0,0,.65);
+    border:1px solid #777;
+    font-size:28px;
+    color:white;
+}
+
+.control:active{
+    transform:scale(.9);
+}
+
+.pause{
+    position:absolute;
+    z-index:40;
+    right:15px;
+    top:75px;
+    width:45px;
+    height:45px;
+    border-radius:12px;
+    background:rgba(0,0,0,.65);
+}
+
+/* PAUSE */
+#pauseScreen{
+    display:none;
+}
+
+/* RESPONSIVE */
+@media(max-width:500px){
+    .road{
+        width:84vw;
+    }
+
+    .car{
+        width:48px;
+        height:82px;
+    }
+
+    .panel h1{
+        font-size:38px;
+    }
+
+    .box{
+        min-width:65px;
+        padding:7px;
+    }
+
+    .box strong{
+        font-size:15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<div class="sky"></div>
+
+<div class="road" id="road"></div>
+
+<div class="hud">
+
+<div class="box">
+<small>SCORE</small>
+<strong id="score">0</strong>
+</div>
+
+<div class="box">
+<small>COINS</small>
+<strong id="coins">0</strong>
+</div>
+
+<div class="box">
+<small>LEVEL</small>
+<strong id="level">1</strong>
+</div>
+
+<div class="box">
+<small>SPEED</small>
+<strong id="speed">1</strong>
+</div>
+
+</div>
+
+<button class="pause" onclick="pauseGame()">Ⅱ</button>
+
+<div id="player" class="car player"></div>
+
+<div class="controls">
+
+<button
+class="control"
+ontouchstart="moveLeft()"
+onclick="moveLeft()">◀</button>
+
+<button
+class="control"
+ontouchstart="moveRight()"
+onclick="moveRight()">▶</button>
+
+</div>
+
+
+<!-- START -->
+
+<div class="screen" id="startScreen">
+
+<div class="panel">
+
+<h1>YUVI RACING</h1>
+
+<p>
+Dodge enemy cars, collect coins and survive as long as possible!
+</p>
+
+<p>
+⌨️ PC: Arrow Keys / A-D<br>
+📱 Mobile: Use the buttons
+</p>
+
+<button class="mainBtn" onclick="startGame()">
+START RACE 🚗
+</button>
+
+</div>
+
+</div>
+
+
+<!-- GAME OVER -->
+
+<div class="screen" id="gameOver" style="display:none">
+
+<div class="panel">
+
+<h1>GAME OVER</h1>
+
+<p>
+Your final score:
+<strong id="finalScore">0</strong>
+</p>
+
+<p>
+🏆 Best Score:
+<strong id="bestScore">0</strong>
+</p>
+
+<button class="mainBtn" onclick="restartGame()">
+RACE AGAIN 🔥
+</button>
+
+</div>
+
+</div>
+
+
+<!-- PAUSE -->
+
+<div class="screen" id="pauseScreen">
+
+<div class="panel">
+
+<h1>PAUSED</h1>
+
+<p>Your race is paused.</p>
+
+<button class="mainBtn" onclick="pauseGame()">
+CONTINUE ▶
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+const game =
+document.getElementById("game");
+
+const road =
+document.getElementById("road");
+
+const player =
+document.getElementById("player");
+
+let score = 0;
+let coins = 0;
+let level = 1;
+let speed = 5;
+
+let running = false;
+let paused = false;
+
+let playerX = 0;
+
+let enemies = [];
+let coinObjects = [];
+
+let spawnTimer = 0;
+let coinTimer = 0;
+
+let lastTime = 0;
+
+
+/* =========================
+   START
+========================= */
+
+function startGame(){
+
+    document.getElementById(
+        "startScreen"
+    ).style.display="none";
+
+    running=true;
+    paused=false;
+
+    score=0;
+    coins=0;
+    level=1;
+    speed=5;
+
+    enemies.forEach(e=>e.remove());
+    coinObjects.forEach(c=>c.remove());
+
+    enemies=[];
+    coinObjects=[];
+
+    positionPlayer();
+
+    lastTime=performance.now();
+
+    requestAnimationFrame(loop);
+}
+
+
+/* =========================
+   RESTART
+========================= */
+
+function restartGame(){
+
+    document.getElementById(
+        "gameOver"
+    ).style.display="none";
+
+    startGame();
+}
+
+
+/* =========================
+   PLAYER POSITION
+========================= */
+
+function positionPlayer(){
+
+    const roadWidth =
+    road.clientWidth;
+
+    const carWidth =
+    player.offsetWidth;
+
+    playerX =
+    (roadWidth-carWidth)/2;
+
+    player.style.left =
+    playerX+"px";
+
+    player.style.bottom="80px";
+
+}
+
+
+/* =========================
+   MOVE
+========================= */
+
+function moveLeft(){
+
+    if(!running || paused)
+        return;
+
+    playerX -= 45;
+
+    if(playerX < 8)
+        playerX=8;
+
+    player.style.left =
+    playerX+"px";
+}
+
+
+function moveRight(){
+
+    if(!running || paused)
+        return;
+
+    playerX += 45;
+
+    const max =
+    road.clientWidth -
+    player.offsetWidth -
+    8;
+
+    if(playerX > max)
+        playerX=max;
+
+    player.style.left =
+    playerX+"px";
+}
+
+
+/* =========================
+   KEYBOARD
+========================= */
+
+document.addEventListener(
+"keydown",
+function(e){
+
+    if(e.key==="ArrowLeft" || e.key==="a")
+        moveLeft();
+
+    if(e.key==="ArrowRight" || e.key==="d")
+        moveRight();
+
+    if(e.key===" ")
+        pauseGame();
+
+});
+
+
+/* =========================
+   SPAWN ENEMY
+========================= */
+
+function spawnEnemy(){
+
+    const enemy =
+    document.createElement("div");
+
+    enemy.className="car enemy";
+
+    const types=[
+        "",
+        "blue",
+        "yellow"
+    ];
+
+    enemy.classList.add(
+        types[
+            Math.floor(
+                Math.random()*types.length
+            )
+        ]
+    );
+
+    const maxX =
+    road.clientWidth -
+    65;
+
+    const x =
+    Math.random()*maxX;
+
+    enemy.style.left =
+    x+"px";
+
+    enemy.style.top="-110px";
+
+    road.appendChild(enemy);
+
+    enemies.push(enemy);
+}
+
+
+/* =========================
+   SPAWN COIN
+========================= */
+
+function spawnCoin(){
+
+    const coin =
+    document.createElement("div");
+
+    coin.className="coin";
+
+    const x =
+    Math.random() *
+    (road.clientWidth-30);
+
+    coin.style.left =
+    x+"px";
+
+    coin.style.top="-40px";
+
+    road.appendChild(coin);
+
+    coinObjects.push(coin);
+}
+
+
+/* =========================
+   COLLISION
+========================= */
+
+function collision(a,b){
+
+    const A =
+    a.getBoundingClientRect();
+
+    const B =
+    b.getBoundingClientRect();
+
+    return !(
+        A.bottom < B.top ||
+        A.top > B.bottom ||
+        A.right < B.left ||
+        A.left > B.right
+    );
+
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+function loop(time){
+
+    if(!running)
+        return;
+
+    requestAnimationFrame(loop);
+
+    if(paused)
+        return;
+
+    const delta =
+    Math.min(
+        time-lastTime,
+        40
+    );
+
+    lastTime=time;
+
+    update(delta);
+}
+
+
+/* =========================
+   UPDATE
+========================= */
+
+function update(delta){
+
+    const move =
+    speed *
+    delta/8;
+
+    /* SCORE */
+
+    score += delta * 0.02;
+
+    document.getElementById(
+        "score"
+    ).textContent =
+    Math.floor(score);
+
+
+    /* LEVEL */
+
+    level =
+    Math.floor(score/500)+1;
+
+    speed =
+    5 + (level-1)*0.7;
+
+    document.getElementById(
+        "level"
+    ).textContent =
+    level;
+
+    document.getElementById(
+        "speed"
+    ).textContent =
+    speed.toFixed(1);
+
+
+    /* ENEMIES */
+
+    spawnTimer += delta;
+
+    const spawnRate =
+    Math.max(
+        420,
+        1000-(level*45)
+    );
+
+    if(spawnTimer > spawnRate){
+
+        spawnEnemy();
+
+        spawnTimer=0;
+    }
+
+
+    enemies.forEach(
+    (enemy,index)=>{
+
+        let top =
+        parseFloat(
+            enemy.style.top
+        );
+
+        top += move;
+
+        enemy.style.top =
+        top+"px";
+
+
+        if(collision(
+            player,
+            enemy
+        )){
+
+            endGame();
+
+        }
+
+
+        if(top >
+        game.clientHeight+100){
+
+            enemy.remove();
+
+            enemies.splice(
+                index,
+                1
+            );
+        }
+
+    });
+
+
+    /* COINS */
+
+    coinTimer += delta;
+
+    if(coinTimer > 1600){
+
+        spawnCoin();
+
+        coinTimer=0;
+    }
+
+
+    coinObjects.forEach(
+    (coin,index)=>{
+
+        let top =
+        parseFloat(
+            coin.style.top
+        );
+
+        top += move;
+
+        coin.style.top =
+        top+"px";
+
+
+        if(collision(
+            player,
+            coin
+        )){
+
+            coins++;
+
+            score += 100;
+
+            document.getElementById(
+                "coins"
+            ).textContent =
+            coins;
+
+            coin.remove();
+
+            coinObjects.splice(
+                index,
+                1
+            );
+
+        }
+
+
+        if(top >
+        game.clientHeight+50){
+
+            coin.remove();
+
+            coinObjects.splice(
+                index,
+                1
+            );
+        }
+
+    });
+
+}
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+function endGame(){
+
+    running=false;
+
+    const oldBest =
+    Number(
+        localStorage.getItem(
+            "yuviBest"
+        ) || 0
+    );
+
+    const final =
+    Math.floor(score);
+
+    const best =
+    Math.max(
+        oldBest,
+        final
+    );
+
+    localStorage.setItem(
+        "yuviBest",
+        best
+    );
+
+    document.getElementById(
+        "finalScore"
+    ).textContent =
+    final;
+
+    document.getElementById(
+        "bestScore"
+    ).textContent =
+    best;
+
+    document.getElementById(
+        "gameOver"
+    ).style.display="flex";
+}
+
+
+/* =========================
+   PAUSE
+========================= */
+
+function pauseGame(){
+
+    if(!running)
+        return;
+
+    paused=!paused;
+
+    document.getElementById(
+        "pauseScreen"
+    ).style.display =
+    paused ? "flex" : "none";
+
+    lastTime=
+    performance.now();
+}
+
+
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+"resize",
+function(){
+
+    if(running)
+        positionPlayer();
+
+});
+
+
+positionPlayer();
+
+</script>
+
+</body>
+  </html>
